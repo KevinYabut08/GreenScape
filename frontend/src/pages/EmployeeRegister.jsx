@@ -10,7 +10,7 @@ import Sponsor6 from '../assets/img/img-6.png';
 import Sponsor7 from '../assets/img/img-7.png';
 
 import { useState } from 'react';
-import { useNavigate } from "react-router-dom";   // ✅ added
+import { useNavigate } from "react-router-dom";   
 import AxiosInstance from '../components/AxiosInstance'; 
 
 const Register = () => {
