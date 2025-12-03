@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import './App.css';
+import { Routes, Route } from 'react-router-dom';
+import NavbarWrapper from './components/NavbarWrapper';
+import Home from './pages/Home';
+import Services from './pages/Services';
+import Booking from './pages/Booking';
+import Settings from './pages/Settings';
+import Landing from './pages/LandingPage';
+import Register from './pages/Register';
+import Login from './components/Login';
+import EmployeeLogin from './components/EmployeeLogin'; 
+import EmployeeHome from './pages/EmployeeHome';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Routes>
+      {/* Public pages without Navbar */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/employee-login" element={<EmployeeLogin />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Pages with Navbar */}
+      <Route element={<NavbarWrapper />}>
+        <Route path="/home" element={<Home />} />
+        <Route path="/employeeHome" element={<EmployeeHome />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+export default App;

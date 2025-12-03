@@ -1,42 +1,96 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+.myBackground {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content:start;
+}
+
+.backgroundVideo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  z-index: -1; 
+}
+
+.loginForm {
+  position: relative;
+  height: 100%;
+  z-index: 1;
+  background-color:#d8e9c6; 
+  padding: 40px 60px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   text-align: center;
+  color: white;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.loginForm h2 {
+  margin-bottom: 10px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.loginForm input {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 16px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.loginForm button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background-color: #0A8341;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.card {
-  padding: 2em;
+.loginForm button:hover {
+  background-color: #06632b;
 }
 
-.read-the-docs {
-  color: #888;
+
+.sponsorsImg {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  justify-content: center;
+  gap: 20px; 
+  align-items: center; 
 }
+.sponsorsImg img {
+  width: 100px; 
+  height: auto;
+  justify-self: center; 
+}
+
+.sponsorsImg img:last-child {
+  grid-column: 1 / span 3;
+}
+
+.landingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  gap: 20px;
+  z-index: 1;
+}
+
+.landingLogo {
+  width: 200px;
+  height: auto;
+  margin-top: 100px;
+  margin-bottom: 30px;
+}
+
