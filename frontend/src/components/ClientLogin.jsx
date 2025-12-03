@@ -13,10 +13,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AxiosInstance from '../components/AxiosInstance';
 
-const EmployeeLogin = () => {
+const ClientLogin = () => {
   const navigate = useNavigate();
 
-  const [employeeNumber, setEmployeeNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -25,22 +24,20 @@ const EmployeeLogin = () => {
   const handleLogin = async () => {
     setError('');
 
-    if (!employeeNumber || !email || !password) {
+    if (!email || !password) {
       setError("Please fill in all fields.");
       return;
     }
 
     try {
-      const response = await AxiosInstance.post('login/employee/', {
-        employee_number: employeeNumber,
+      const response = await AxiosInstance.post('login/client/', {
         email: email,
         password: password
       });
 
-      console.log("Login success:", response.data);
+      console.log("Client login success:", response.data);
 
-
-      navigate('/employeeHome');
+      navigate('/home');
 
     } catch (err) {
       console.error(err.response || err);
@@ -58,20 +55,12 @@ const EmployeeLogin = () => {
 
       <video autoPlay muted loop className="backgroundVideo">
         <source src={BackgroundVideo} type="video/mp4" />
-        Your browser does not support the video tag.
       </video>
 
       <div className="loginForm">
         <div className="landingContent">
           <img src={Logo} alt="Logo" className="landingLogo" />
         </div>
-
-        <input
-          type="text"
-          placeholder="Employee Number"
-          value={employeeNumber}
-          onChange={e => setEmployeeNumber(e.target.value)}
-        />
 
         <input
           type="text"
@@ -89,7 +78,7 @@ const EmployeeLogin = () => {
 
         <button onClick={handleLogin}>Login</button>
 
-        <button onClick={() => navigate('/employee-register')}>
+        <button onClick={() => navigate('/client-register')}>
           Sign Up
         </button>
 
@@ -99,10 +88,10 @@ const EmployeeLogin = () => {
           {[Sponsor1, Sponsor2, Sponsor3, Sponsor4, Sponsor5, Sponsor6, Sponsor7].map((s, i) => (
             <img key={i} src={s} alt={`Sponsor ${i}`} style={{ width: '80px', height: 'auto' }} />
           ))}
-        </div>   
+        </div>
       </div>
     </div>
   );
 };
 
-export default EmployeeLogin;
+export default ClientLogin;

@@ -20,10 +20,25 @@ class CustomManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     email = models.EmailField(max_length=200, unique=True)
-    birthday = models.DateField(null=True, blank=True)
     username = models.CharField(max_length=200, null=True, blank=True)
+    first_name = models.CharField(max_length=150, null=True, blank=True)
+    last_name = models.CharField(max_length=150, null=True, blank=True)
+    birthday = models.DateField(null=True, blank=True)
+    employee_number = models.CharField(max_length=50, null=True, blank=True)
+
+    role = models.CharField(
+        max_length=20,
+        choices=(
+            ("client", "Client"),
+            ("employee", "Employee")
+        ),
+        default="client"
+    )
 
     objects = CustomManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []  
+
+    def __str__(self):
+        return f"{self.email} ({self.role})"

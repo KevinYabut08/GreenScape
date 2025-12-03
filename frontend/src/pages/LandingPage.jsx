@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 const LandingPage = () => {
   const navigate = useNavigate();
 
-  const handleClientClick = () => navigate('/login');
+  const handleClientClick = () => navigate('/client-login');
   const handleEmployeeClick = () => navigate('/employee-login');
 
   return (
@@ -29,14 +29,10 @@ const LandingPage = () => {
         <button onClick={handleEmployeeClick}>EMPLOYEE</button>
 
         <div className="sponsorsImg">
-          <img src={Sponsor1} alt="Sponsor 1" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor2} alt="Sponsor 2" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor3} alt="Sponsor 3" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor4} alt="Sponsor 1" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor5} alt="Sponsor 2" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor6} alt="Sponsor 3" style={{ width: '80px', height: 'auto' }} />
-          <img src={Sponsor7} alt="Sponsor 3" style={{ width: '80px', height: 'auto' }} />
-        </div>
+          {[Sponsor1, Sponsor2, Sponsor3, Sponsor4, Sponsor5, Sponsor6, Sponsor7].map((s, i) => (
+            <img key={i} src={s} alt={`Sponsor ${i}`} style={{ width: '80px', height: 'auto' }} />
+          ))}
+        </div>   
       </div>
     </div>
   );
