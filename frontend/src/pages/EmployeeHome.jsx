@@ -1,6 +1,8 @@
 const EmployeeHome = () =>{
     return(
-        <div>This is the Home page</div>
+        <div>
+            <p className="titleWrapper">EMPLOYEE DASHBOARD</p>
+        </div>
     )
 }
 

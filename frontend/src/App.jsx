@@ -11,6 +11,7 @@ import ClientLogin from './components/ClientLogin';
 import EmployeeLogin from './components/EmployeeLogin'; 
 import EmployeeHome from './pages/EmployeeHome';
 import ClientRegister from './pages/ClientRegister';
+import RouteProtection from "./components/RouteProtection";
 
 function App() {
   return (
@@ -24,11 +25,11 @@ function App() {
 
       {/* Pages with Navbar */}
       <Route element={<NavbarWrapper />}>
-        <Route path="/home" element={<Home />} />
-        <Route path="/employeeHome" element={<EmployeeHome />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/booking" element={<Booking />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/home" element={<RouteProtection><Home /></RouteProtection>}/>
+        <Route path="/employeeHome" element={<RouteProtection><EmployeeHome /></RouteProtection>} />
+        <Route path="/services" element={<RouteProtection><Services /></RouteProtection>} />
+        <Route path="/booking" element={<RouteProtection><Booking /></RouteProtection>} />
+        <Route path="/settings" element={<RouteProtection><Settings /></RouteProtection>} />
       </Route>
     </Routes>
   );

@@ -1,6 +1,8 @@
 const Services = () =>{
     return(
-        <div>This is the Services page</div>
+        <div>
+            <p className="titleWrapper">SERVICES</p>
+        </div>
     )
 }
 

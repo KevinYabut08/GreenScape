@@ -3,9 +3,7 @@ from django.contrib.auth import get_user_model, authenticate
 
 User = get_user_model()
 
-# -----------------------------
-# CLIENT LOGIN
-# -----------------------------
+
 class ClientLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -30,9 +28,7 @@ class ClientLoginSerializer(serializers.Serializer):
         return data
 
 
-# -----------------------------
-# CLIENT REGISTRATION
-# -----------------------------
+
 class ClientRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -47,9 +43,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-# -----------------------------
-# EMPLOYEE LOGIN
-# -----------------------------
+
 class EmployeeLoginSerializer(serializers.Serializer):
     employee_number = serializers.CharField()
     email = serializers.EmailField()
@@ -82,9 +76,7 @@ class EmployeeLoginSerializer(serializers.Serializer):
         return data
 
 
-# -----------------------------
-# EMPLOYEE REGISTRATION
-# -----------------------------
+
 class EmployeeRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -97,3 +89,19 @@ class EmployeeRegisterSerializer(serializers.ModelSerializer):
             role="employee"
         )
         return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate_new_password(self, value):
+        if len(value) < 6:
+            raise serializers.ValidationError("Password must be at least 6 characters.")
+        return value

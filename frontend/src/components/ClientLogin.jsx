@@ -1,13 +1,6 @@
 import '../App.css';
 import BackgroundVideo from '../assets/videos/vid_1.mp4'; 
 import Logo from '../assets/img/Logo.png'; 
-import Sponsor1 from '../assets/img/img-1.png';
-import Sponsor2 from '../assets/img/img-2.png';
-import Sponsor3 from '../assets/img/img-3.png';
-import Sponsor4 from '../assets/img/img-4.png';
-import Sponsor5 from '../assets/img/img-5.png';
-import Sponsor6 from '../assets/img/img-6.png';
-import Sponsor7 from '../assets/img/img-7.png';
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -36,7 +29,8 @@ const ClientLogin = () => {
       });
 
       console.log("Client login success:", response.data);
-
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("first_name", response.data.user.first_name);
       navigate('/home');
 
     } catch (err) {
@@ -84,11 +78,6 @@ const ClientLogin = () => {
 
         {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
 
-        <div className="sponsorsImg">
-          {[Sponsor1, Sponsor2, Sponsor3, Sponsor4, Sponsor5, Sponsor6, Sponsor7].map((s, i) => (
-            <img key={i} src={s} alt={`Sponsor ${i}`} style={{ width: '80px', height: 'auto' }} />
-          ))}
-        </div>
       </div>
     </div>
   );

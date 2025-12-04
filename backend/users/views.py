@@ -67,3 +67,32 @@ class EmployeeRegisterViewSet(viewsets.ModelViewSet):
             user = serializer.save()
             return Response(EmployeeRegisterSerializer(user).data, status=201)
         return Response(serializer.errors, status=400)
+    
+
+class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.AllowAny]
+    queryset = User.objects.all()
+    serializer_class = EmployeeRegisterSerializer
+
+    def list(self, request):
+        queryset = User.objects.all()
+        serializers = self.serializer_class(queryset, many=True)
+        return Response(serializers.data)
+    
+class ChangePasswordViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def create(self, request):
+        serializer = self.serializer_class(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+
+        return Response({"message": "Password changed successfully."}, status=200)
+

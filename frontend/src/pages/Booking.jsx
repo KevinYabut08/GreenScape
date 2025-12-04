@@ -1,6 +1,8 @@
 const Booking = () =>{
     return(
-        <div>This is the Booking page</div>
+        <div>
+            <p className="titleWrapper">BOOKING</p>
+        </div>
     )
 }
 

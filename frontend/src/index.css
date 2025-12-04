@@ -1,9 +1,11 @@
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family:'Courier New', Courier, monospace;
 }
 
 html, body{
   height: 100%;
   margin: 0;
   padding: 0;
+  /* overflow: hidden; */
 }
