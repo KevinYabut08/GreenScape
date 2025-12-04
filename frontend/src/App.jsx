@@ -25,8 +25,8 @@ function App() {
 
       {/* Pages with Navbar */}
       <Route element={<NavbarWrapper />}>
-        <Route path="/home" element={<RouteProtection><Home /></RouteProtection>}/>
-        <Route path="/employeeHome" element={<RouteProtection><EmployeeHome /></RouteProtection>} />
+        <Route path="/home" element={<RouteProtection allowedRole="client"><Home /></RouteProtection>}/>
+        <Route path="/employeeHome" element={<RouteProtection allowedRole="employee"><EmployeeHome /></RouteProtection>} />
         <Route path="/services" element={<RouteProtection><Services /></RouteProtection>} />
         <Route path="/booking" element={<RouteProtection><Booking /></RouteProtection>} />
         <Route path="/settings" element={<RouteProtection><Settings /></RouteProtection>} />

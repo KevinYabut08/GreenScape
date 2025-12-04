@@ -32,6 +32,7 @@ const EmployeeLogin = () => {
 
       console.log("Login success:", response.data);
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem("role", response.data.user.role);
       localStorage.setItem("first_name", response.data.user.first_name);
       navigate('/employeeHome');
 

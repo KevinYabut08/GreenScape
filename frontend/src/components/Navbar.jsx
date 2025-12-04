@@ -8,30 +8,39 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
+
 import Logo from "../assets/img/Logo.png";
 import ProfilePic from "../assets/img/Profile.jpg";
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const theme = createTheme({
-  typography: {
-    fontFamily: "'Courier New', 'monospace'",
-  },
+  typography: { fontFamily: "'Courier New', monospace" },
 });
 
 const drawerWidth = 300;
 
-export default function Navbar(props) {
-  const { content } = props;
+export default function Navbar({ content }) {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
+
   const firstName = localStorage.getItem("first_name") || "User";
+  const role = localStorage.getItem("role");
+
+  const routes = {
+    dashboard: role === "employee" ? "/employeeHome" : "/home",
+    services: "/services",
+    booking: "/booking",
+    settings: "/settings",
+  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem("token");
@@ -48,7 +57,7 @@ export default function Navbar(props) {
       console.log("Logout error:", error);
     }
 
-    localStorage.removeItem("token");
+    localStorage.clear();
     navigate("/");
   };
 
@@ -70,33 +79,13 @@ export default function Navbar(props) {
         >
           <Toolbar />
 
-          {/* Logo */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              p: 2,
-              mb: 1,
-            }}
-          >
-            <img
-              src={Logo}
-              alt="Logo"
-              style={{ width: "200px", height: "auto" }}
-            />
+          {/* LOGO */}
+          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+            <img src={Logo} alt="Logo" style={{ width: "200px" }} />
           </Box>
 
-          {/* Profile Picture */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              p: 1,
-              mb: 3,
-            }}
-          >
+          {/* PROFILE */}
+          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
             <img
               src={ProfilePic}
               alt="Profile"
@@ -104,15 +93,15 @@ export default function Navbar(props) {
                 width: "150px",
                 height: "150px",
                 borderRadius: "50%",
-                objectFit: "cover",
                 border: "2px solid #06632b",
+                objectFit: "cover",
               }}
             />
           </Box>
 
           <Typography
             sx={{
-              mb: 6,
+              mb: 4,
               textAlign: "center",
               color: "#06632b",
               fontWeight: "bold",
@@ -122,7 +111,7 @@ export default function Navbar(props) {
             Welcome, {firstName}!
           </Typography>
 
-          {/* Sidebar Menu */}
+          {/* MENU */}
           <Box sx={{ overflow: "auto" }}>
             <List>
 
@@ -130,8 +119,8 @@ export default function Navbar(props) {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/home"
-                  selected={"/home" === path}
+                  to={routes.dashboard}
+                  selected={path === routes.dashboard}
                 >
                   <ListItemIcon>
                     <DashboardIcon sx={{ color: "#06632b" }} />
@@ -144,8 +133,8 @@ export default function Navbar(props) {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/services"
-                  selected={"/services" === path}
+                  to={routes.services}
+                  selected={path === routes.services}
                 >
                   <ListItemIcon>
                     <WaterDropIcon sx={{ color: "#06632b" }} />
@@ -158,8 +147,8 @@ export default function Navbar(props) {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/booking"
-                  selected={"/booking" === path}
+                  to={routes.booking}
+                  selected={path === routes.booking}
                 >
                   <ListItemIcon>
                     <CalendarMonthIcon sx={{ color: "#06632b" }} />
@@ -172,8 +161,8 @@ export default function Navbar(props) {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/settings"
-                  selected={"/settings" === path}
+                  to={routes.settings}
+                  selected={path === routes.settings}
                 >
                   <ListItemIcon>
                     <SettingsIcon sx={{ color: "#06632b" }} />
@@ -196,6 +185,7 @@ export default function Navbar(props) {
           </Box>
         </Drawer>
 
+        {/* MAIN CONTENT */}
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <Toolbar />
           {content}

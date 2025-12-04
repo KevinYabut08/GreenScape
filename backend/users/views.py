@@ -20,8 +20,14 @@ class ClientLoginViewSet(viewsets.ViewSet):
         _, token = AuthToken.objects.create(user)
 
         return Response({
-            "user": ClientRegisterSerializer(user).data,
-            "token": token
+            "token": token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role   
+            }
         })
 
     
@@ -51,8 +57,15 @@ class EmployeeLoginViewSet(viewsets.ViewSet):
         _, token = AuthToken.objects.create(user)
 
         return Response({
-            "user": EmployeeRegisterSerializer(user).data,
-            "token": token
+            "token": token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role,               
+                "employee_number": user.employee_number 
+            }
         })
 
 
