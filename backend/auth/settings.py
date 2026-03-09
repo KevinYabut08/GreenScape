@@ -37,11 +37,58 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'users',
-    'knox'
+    'core',
+    'rest_framework_simplejwt.token_blacklist',
+    # 'knox',
 ]
+
+LOGGING = {
+    "version": 1,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "django.core.mail": {"handlers": ["console"], "level": "DEBUG"},
+        "allauth": {"handlers": ["console"], "level": "INFO"},
+        "allauth.account": {"handlers": ["console"], "level": "INFO"},
+    },
+}
+
+# Email verifty
+SITE_ID = 1
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*", "first_name", "last_name"]
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/email-verified/"
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "http://localhost:5173"
+
+# When user click verifiy email link, the email will be verified immediately without asking user to click another confirm button.
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+
+# Email Provider Settings
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "email-smtp.us-east-2.amazonaws.com"  # SES region
+EMAIL_PORT = 465
+# EMAIL_PORT = 587
+EMAIL_HOST_USER = "AKIAUCGFGNJ2K4QPTQ5J"
+EMAIL_HOST_PASSWORD = "BIHyNRTuW65CKysKYiFgt+ED9e/JbUGcyIZrFm9h12A7"
+DEFAULT_FROM_EMAIL = "badoobob2@gmail.com"
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_TIMEOUT = 30  # seconds
+
+
+# # IMPORTANT REMOVE AFTER DEVELOPMENT
+# PYTHONHTTPSVERIFY=0 
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -52,6 +99,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -62,6 +110,7 @@ AUTH_USER_MODEL ='users.CustomUser'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 ROOT_URLCONF = 'auth.urls'
@@ -84,7 +133,34 @@ TEMPLATES = [
 WSGI_APPLICATION = 'auth.wsgi.application'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ('knox.auth.TokenAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'knox.auth.TokenAuthentication', 
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        ),
+    
+    "DEFAULT_PERMISSION_CLASSES": (
+            "rest_framework.permissions.IsAuthenticated",
+            "rest_framework.permissions.DjangoModelPermissions",
+        ),
+
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle", 
+    ],
+
+    "DEFAULT_THROTTLE_RATES": {
+        # Login endpoint is accessible to unauthenticated users → protect it heavily
+        "anon": "30/minute",       # UMA: 5 unauthenticated requests per minute per IP
+        "user": "60/minute",      # Authenticated user actions
+        "login": "30/minute",       # Login endpoint (if separate throttle needed)
+        "register": "5/hour",    # Registration endpoint (if separate throttle needed)
+    },
+
+    "DEFAULT_PAGINATION_CLASS":
+        "rest_framework.pagination.PageNumberPagination",
+        "PAGE_SIZE": 10,
+
 }
 
 
@@ -93,8 +169,14 @@ REST_FRAMEWORK = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mssql',
+        'NAME': 'GreenScape',
+        'HOST' : 'localhost',
+        'OPTIONS' : {
+            'driver' : 'ODBC Driver 17 for SQL Server',
+            'trusted_connection' : 'yes',
+            'TrustServerCertificate': 'yes',
+        },
     }
 }
 
