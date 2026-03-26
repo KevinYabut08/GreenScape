@@ -26,4 +26,5 @@ router.register(r'service-locations', ServiceLocationViewSet, basename='servicel
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("chatbot/", include("core.chatbot.urls")),
 ]

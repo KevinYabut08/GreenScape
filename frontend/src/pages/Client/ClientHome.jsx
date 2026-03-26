@@ -8,6 +8,7 @@ import Time from '../../ClientDashboard/Timeboard.jsx';
 import Remain from '../../ClientDashboard/RemainingBudget.jsx';
 import Analytics from "../../ClientDashboard/Analytics.jsx";
 import Maps from "../../ClientDashboard/Maps.jsx";
+import Chatbot from "../../components/Chatbot";
 
 const Home = () => {
   return (
@@ -36,7 +37,8 @@ const Home = () => {
           </div>
         </div>
       </div>
-      </div>
+      <Chatbot />
+    </div>
   );
 };
 
