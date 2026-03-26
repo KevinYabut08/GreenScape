@@ -52,7 +52,7 @@ Summarize and format answers for customers instead of copying large blocks verba
             {"role": "system", "content": full_system_prompt},
             {"role": "user", "content": user_message.strip()},
         ],
-        max_completion_tokens=12000,
+        max_completion_tokens=7000,
     )
 
     # Debug prints for inspecting the raw model response during development.
