@@ -91,6 +91,26 @@ GREENCAPE_KEYWORDS = [
     "repair",
 ]
 
+def is_allowed_chatbot_question(text: str) -> bool:
+    normalized = (text or "").lower().strip()
+
+    allowed_phrases = [
+        "who are you",
+        "what are you",
+        "what is your name",
+        "what's your name",
+        "what can you do",
+        "how can you help",
+        "help me",
+        "are you a bot",
+        "are you ai",
+        "are you an ai",
+        "introduce yourself",
+        "tell me about yourself",
+    ]
+
+    return any(phrase in normalized for phrase in allowed_phrases)
+
 def is_unsafe_message(text: str) -> bool:
     # Normalize the message to lowercase and remove outer whitespace so pattern
     # matching is more consistent.
@@ -133,7 +153,7 @@ def chatbot_view(request):
 
     # If the message is outside the GreenScape domain, return the out-of-scope
     # response instead of querying the model.
-    if not is_greenscape_related(message):
+    if not is_greenscape_related(message) and not is_allowed_chatbot_question(message):
         return Response(
             {"reply": OUT_OF_SCOPE_REPLY, "isSafetyResponse": False},
             status=status.HTTP_200_OK,
