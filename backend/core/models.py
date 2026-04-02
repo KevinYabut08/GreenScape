@@ -157,9 +157,7 @@ class Employee(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         db_column="UserId",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="employee",
     )
     employeeid = models.AutoField(db_column="EmployeeId", primary_key=True)
@@ -167,8 +165,6 @@ class Employee(models.Model):
     firstname = models.CharField(db_column="FirstName", max_length=20, null=True, blank=True)
     lastname = models.CharField(db_column="LastName", max_length=20,null=True, blank=True)
     phonenumber = models.CharField(db_column="PhoneNumber", max_length=10, null=True, blank=True)
-    staffstatus = models.CharField(db_column="StaffStatus", max_length=20, null=True, blank=True)
-    roleid = models.ForeignKey(Group, models.DO_NOTHING, db_column='RoleId')
 
     class Meta:
         managed = True
@@ -214,7 +210,6 @@ class Quotes(models.Model):
     quotesid = models.AutoField(db_column='QuotesId', primary_key=True)  # Field name made lowercase.
     customerid = models.ForeignKey(Customer, models.DO_NOTHING, db_column='CustomerId')  # Field name made lowercase.
     serviceid = models.ForeignKey('Service', models.DO_NOTHING, db_column='ServiceId')  # Field name made lowercase.
-    additionalserviceid = models.IntegerField(db_column='AdditionalServiceId')  # Field name made lowercase.
     zoneid = models.ForeignKey('Zone', models.DO_NOTHING, db_column='ZoneId')  # Field name made lowercase.
     taxamount = models.DecimalField(db_column='TaxAmount', max_digits=10, decimal_places=2)  # Field name made lowercase.
     totalamount = models.DecimalField(db_column='TotalAmount', max_digits=10, decimal_places=2)  # Field name made lowercase.

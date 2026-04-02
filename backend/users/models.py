@@ -1,7 +1,8 @@
+from email.headerregistry import Group
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import Q
+from django.core.validators import RegexValidator
 
 class CustomManager(BaseUserManager):
 
@@ -21,18 +22,23 @@ class CustomManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)  # Ensure superusers are active by default
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("role", "employee")
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-        if extra_fields.get('is_active') is not True:
-            raise ValueError('Superuser must have is_active=True.')
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
 
-        return self.create_user(email, password, **extra_fields)
+        user = self.create_user(email, password, **extra_fields)
+
+        #Assign superuser to SuperAdmin group for permissions
+        superadmin_group, _ = Group.objects.get_or_create(name="SuperAdmin")
+        user.groups.add(superadmin_group)
+
+        return user
 
 class CustomUser(AbstractUser):
     username = None
@@ -41,10 +47,20 @@ class CustomUser(AbstractUser):
 
     # User email
     email = models.EmailField(max_length=200, unique=True)
-
     # Employee Number
-    employee_number = models.CharField(max_length=50, null=True, blank=True)
-    
+    employee_number = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r'^\d+$',
+                message="Employee number must contain digits only."
+            )
+        ],
+        help_text="Numeric employee identifier (employees only)",
+    )
     # Assign Google Account to user
     google_sub = models.CharField(max_length=255, null=True, blank=True, db_index=True)
     avatar_url = models.URLField(null=True, blank=True)

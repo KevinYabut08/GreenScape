@@ -17,6 +17,7 @@ import Services from './pages/Client/Services';
 import Booking from './pages/Client/Booking';
 import RequestQuote from './pages/Client/RequestQuote';
 import Settings from './pages/Client/Settings';
+import CompleteProfilePage from './pages/Client/CompleteProfilePage';
 
 // Employee/admin pages
 import EmployeeHome from "./pages/EmployeeHome";
@@ -29,6 +30,7 @@ import BookingRequests from "./pages/Employee/BookingRequests";
 import FinancesBoard from "./pages/Employee/FinancesBoard";
 import ClientView from "./pages/Employee/ClientView";
 import EmployeeAccount from "./pages/Employee/EmployeeAccount";
+import CompleteProfile from "./pages/Employee/Completeprofile";
 
 // Service info pages
 import IrrigationInstallation from "./components/services-info/Irrigation";
@@ -49,6 +51,23 @@ function App() {
       <Route path="/employee-login" element={<EmployeeLogin />} />
       <Route path="/employee-register" element={<EmployeeRegister />} />
       <Route path="/client-register" element={<ClientRegister />} />
+
+      {/* Complete Profile Page */}
+      <Route
+          path="/complete-profile"
+          element={
+            <RouteProtection allowedRole="client">
+              <CompleteProfilePage />
+            </RouteProtection>
+          }
+      />
+
+      <Route
+        path="/employee/complete-profile"
+        element={<RouteProtection allowedRole="employee">
+              <CompleteProfile />
+            </RouteProtection>}
+      />
 
       {/* Pages with Navbar */}
       <Route element={<NavbarWrapper />}>
@@ -72,7 +91,7 @@ function App() {
         <Route
           path="/services"
           element={
-            <RouteProtection>
+            <RouteProtection allowedRole="client"> 
               <Services />
             </RouteProtection>
           }
@@ -80,7 +99,7 @@ function App() {
         <Route
           path="/booking"
           element={
-            <RouteProtection>
+            <RouteProtection allowedRole="client">
               <Booking />
             </RouteProtection>
           }
@@ -88,7 +107,7 @@ function App() {
         <Route
           path="/request-quote"
           element={
-            <RouteProtection>
+            <RouteProtection allowedRole="client">
               <RequestQuote />
             </RouteProtection>
           }
@@ -96,7 +115,7 @@ function App() {
         <Route
           path="/settings"
           element={
-            <RouteProtection>
+            <RouteProtection allowedRole="client">
               <Settings />
             </RouteProtection>
           }
