@@ -173,7 +173,6 @@ const Booking = () => {
       // Clear selected time if it just became unavailable
       if (formData.time && !available.includes(formData.time)) {
         setFormData((prev) => ({ ...prev, time: "" }));
-        showMessage("warning", "Your selected time is no longer available. Please choose another.");
       }
 
       return available;
