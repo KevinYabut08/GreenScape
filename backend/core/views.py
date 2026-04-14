@@ -13,6 +13,8 @@ from django.contrib.auth.models import Group
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse, Http404
+from django.conf import settings
 
 # ---------------------------------------------------
 # Django REST Framework
@@ -29,10 +31,13 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 # Third-Party / Services
 # ---------------------------------------------------
 from core.supabase_client import supabase
+from .models import UserImage
+from .serializers import UserImageSerializer
+from .permissions import IsSuperAdminOnly, IsOwner
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SERVICE_IMAGES_BUCKET = os.getenv("SUPABASE_BUCKET_SERVICE_IMAGES", "service-images")
-USER_IMAGES_BUCKET    = os.getenv("SUPABASE_BUCKET_USER_IMAGES", "profiles")
+USER_IMAGES_BUCKET    = "profiles"
 
 
 
@@ -876,37 +881,38 @@ class UserImageViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
 
-    # -----------------------------
-    # Permissions
-    # -----------------------------
-    def get_permissions(self):
-        # DELETE → SuperAdmin only
-        if self.request.method == "DELETE":
-            return [IsSuperAdminOnly()]
+    def _validate_and_extract_file(self, request):
+        uploaded_file = request.FILES.get('image')
+        if not uploaded_file:
+            raise ValidationError({"image": "No image file provided."})
+        if uploaded_file.size > 5 * 1024 * 1024:
+            raise ValidationError({"image": "File size exceeds 5MB limit."})
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+        if uploaded_file.content_type not in allowed_types:
+            raise ValidationError({"image": f"Only {', '.join(allowed_types)} are allowed."})
+        raw_data = uploaded_file.read()
+        filename = uploaded_file.name
+        content_type = uploaded_file.content_type
+        return raw_data, filename, content_type
 
-        # WRITE (upload / replace) → Owner only
+    def _build_storage_path(self, user_id, original_filename):
+        ext = original_filename.split('.')[-1].lower()
+        unique_name = f"{uuid.uuid4().hex}.{ext}"
+        return f"users/{user_id}/profile/{unique_name}"
+
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsOwnerOrSuperAdmin()]   
         if self.request.method not in permissions.SAFE_METHODS:
             return [IsOwner()]
-
-        # READ → authenticated users (visibility limited in queryset)
         return [IsAuthenticated()]
 
-    # -----------------------------
-    # Visibility
-    # -----------------------------
     def get_queryset(self):
         user = self.request.user
-
-        # SuperAdmin / Admin / Supervisor → see all
         if user.groups.filter(name__in=["SuperAdmin", "Admin", "Supervisor"]).exists():
             return self.queryset
-
-        # Regular user → only own images
         return self.queryset.filter(user=user)
 
-    # -----------------------------
-    # Create (Upload)
-    # -----------------------------
     def create(self, request, *args, **kwargs):
         raw, filename, content_type = self._validate_and_extract_file(request)
         storage_path = self._build_storage_path(request.user.id, filename)
@@ -929,58 +935,38 @@ class UserImageViewSet(viewsets.ModelViewSet):
             file_name=filename,
             size_byte=len(raw),
         )
-
         return Response(self.get_serializer(obj).data, status=status.HTTP_201_CREATED)
 
-    # -----------------------------
-    # Replace (Owner only)
-    # -----------------------------
     @action(detail=True, methods=["post"], url_path="replace")
     def replace_file(self, request, pk=None):
         obj = self.get_object()
-
         if obj.user_id != request.user.id:
             raise PermissionDenied("You can only replace your own image.")
-
         raw, filename, content_type = self._validate_and_extract_file(request)
         new_path = self._build_storage_path(obj.user_id, filename)
 
         supabase().storage.from_(USER_IMAGES_BUCKET).upload(
-            path=new_path,
-            file=raw,
+            new_path,
+            raw,
             file_options={
                 "content-type": content_type,
                 "cache-control": "86400",
                 "upsert": "false",
             },
         )
-
-        supabase().storage.from_(USER_IMAGES_BUCKET).remove(path=obj.storage_path)
+     
+        supabase().storage.from_(USER_IMAGES_BUCKET).remove([obj.storage_path])
 
         obj.storage_path = new_path
         obj.content_type = content_type
         obj.file_name = filename
         obj.size_byte = len(raw)
         obj.save()
-
         return Response(self.get_serializer(obj).data)
 
-    # -----------------------------
-    # Delete (SuperAdmin only)
-    # -----------------------------
-    def destroy(self, request, *args, **kwargs):
-        obj = self.get_object()
-
-        supabase().storage.from_(USER_IMAGES_BUCKET).remove(path=obj.storage_path)
-        return super().destroy(request, *args, **kwargs)
-
-    # -----------------------------
-    # Get signed image URL
-    # -----------------------------
     @action(detail=True, methods=["get"], url_path="bytes")
     def get_bytes(self, request, pk=None):
         obj = self.get_object()
-
         if (
             obj.user_id != request.user.id
             and not request.user.groups.filter(
@@ -988,10 +974,22 @@ class UserImageViewSet(viewsets.ModelViewSet):
             ).exists()
         ):
             raise PermissionDenied("You do not have permission to view this image.")
+        try:
+            res = supabase().storage.from_(USER_IMAGES_BUCKET).download(obj.storage_path)
+        except Exception:
+            raise Http404("Image not found")
+        return HttpResponse(res, content_type=obj.content_type)
 
-        signed_url = self._signed_url_for(obj.storage_path)
-        return HttpResponseRedirect(signed_url)
-
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object()
+        try:
+            # Attempt to remove the file from Supabase
+            supabase().storage.from_(USER_IMAGES_BUCKET).remove(path=obj.storage_path)
+        except Exception as e:
+            # Log the error but don't block the deletion of the database record
+            print(f"Supabase deletion error: {e}")
+        # Always delete the database record, even if Supabase removal fails
+        return super().destroy(request, *args, **kwargs)
 # ------------------------------
 # Request Quote Viewset
 # ------------------------------

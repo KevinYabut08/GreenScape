@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import AppBar from "@mui/material/AppBar";
@@ -103,46 +103,14 @@ const menuConfig = {
     { label: "SETTINGS", path: "/settings", icon: <SettingsIcon sx={{ color: "#1c3d37" }} /> },
   ],
   employee: [
-    {
-      label: "DASHBOARD",
-      path: "/employee/dashboard",
-      icon: <DashboardIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "MY SCHEDULE",
-      path: "/employee/my-schedule",
-      icon: <CalendarMonthIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "EMPLOYEE MANAGEMENT",
-      path: "/employee/employee-management",
-      icon: <PeopleOutlineIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "BOOKING REQUESTS",
-      path: "/employee/booking-requests",
-      icon: <AssignmentTurnedInIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "SERVICE SCHEDULE",
-      path: "/employee/service-schedule",
-      icon: <WaterDropIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "FINANCES BOARD",
-      path: "/employee/finances",
-      icon: <RequestQuoteIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "CLIENT VIEW",
-      path: "/employee/client-view",
-      icon: <PeopleOutlineIcon sx={{ color: GREEN }} />,
-    },
-    {
-      label: "ACCOUNT",
-      path: "/employee/account",
-      icon: <AccountCircleIcon sx={{ color: GREEN }} />,
-    },
+    { label: "DASHBOARD", path: "/employee/dashboard", icon: <DashboardIcon sx={{ color: GREEN }} /> },
+    { label: "MY SCHEDULE", path: "/employee/my-schedule", icon: <CalendarMonthIcon sx={{ color: GREEN }} /> },
+    { label: "EMPLOYEE MANAGEMENT", path: "/employee/employee-management", icon: <PeopleOutlineIcon sx={{ color: GREEN }} /> },
+    { label: "BOOKING REQUESTS", path: "/employee/booking-requests", icon: <AssignmentTurnedInIcon sx={{ color: GREEN }} /> },
+    { label: "SERVICE SCHEDULE", path: "/employee/service-schedule", icon: <WaterDropIcon sx={{ color: GREEN }} /> },
+    { label: "FINANCES BOARD", path: "/employee/finances", icon: <RequestQuoteIcon sx={{ color: GREEN }} /> },
+    { label: "CLIENT VIEW", path: "/employee/client-view", icon: <PeopleOutlineIcon sx={{ color: GREEN }} /> },
+    { label: "ACCOUNT", path: "/employee/account", icon: <AccountCircleIcon sx={{ color: GREEN }} /> },
   ],
 };
 
@@ -157,6 +125,62 @@ export default function Navbar({ content }) {
   const [userData, setUserData] = useState({ firstName: "User", role: "client" });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper to get the current token
+  const getAuthHeader = () => {
+    const token = localStorage.getItem("access");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // --- Profile image state (using blob) ---
+  const [profileImage, setProfileImage] = useState(DefaultProfilePic);
+  const [imageLoading, setImageLoading] = useState(true);
+  const blobUrlRef = useRef(null);
+
+  const loadProfileImage = useCallback(async () => {
+    setImageLoading(true);
+    const headers = getAuthHeader();
+    try {
+      const response = await AxiosInstance.get("core/user-image/", { headers });
+      const images = response.data.results ?? response.data;
+      if (images && images.length > 0) {
+        const img = images[0];
+        const imageUrl = `${img.url}?t=${Date.now()}`;
+        const blobRes = await AxiosInstance.get(imageUrl, { responseType: "blob", headers });
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+        const newBlobUrl = URL.createObjectURL(blobRes.data);
+        blobUrlRef.current = newBlobUrl;
+        setProfileImage(newBlobUrl);
+      } else {
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+        setProfileImage(DefaultProfilePic);
+      }
+    } catch (err) {
+      console.error("Navbar loadProfileImage error:", err);
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+      setProfileImage(DefaultProfilePic);
+    } finally {
+      setImageLoading(false);
+    }
+  }, []);
+
+  // Load image on mount and cleanup
+  useEffect(() => {
+    loadProfileImage();
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, [loadProfileImage]);
+
+  // Listen for image updates from ClientProfile
+  useEffect(() => {
+    const handler = () => loadProfileImage();
+    window.addEventListener("profileImageUpdated", handler);
+    return () => window.removeEventListener("profileImageUpdated", handler);
+  }, [loadProfileImage]);
+  // -------------------------------------------------
+
   const normalizeRole = (role) => {
     const lower = (role || "").toLowerCase();
     return EMPLOYEE_ROLES.includes(lower) ? "employee" : "client";
@@ -164,50 +188,37 @@ export default function Navbar({ content }) {
 
   const fetchUserData = async () => {
     setIsLoading(true);
-    
+    const headers = getAuthHeader();
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("access");
       if (!token) {
         setIsLoading(false);
         return;
       }
-
       try {
-        const response = await AxiosInstance.get("core/customers/me/");
+        const response = await AxiosInstance.get("core/customers/me/", { headers });
         if (response.data) {
           const firstName = response.data.firstname || "User";
-          setUserData({
-            firstName: firstName,
-            role: "client"
-          });
+          setUserData({ firstName, role: "client" });
           localStorage.setItem("first_name", firstName);
           setIsLoading(false);
           return;
         }
       } catch (error) {}
-
       try {
-        const response = await AxiosInstance.get("core/employees/me/");
+        const response = await AxiosInstance.get("core/employees/me/", { headers });
         if (response.data) {
-          const firstName = response.data.firstname || 
-                           response.data.user?.email?.split("@")[0] || 
-                           "Employee";
-          setUserData({
-            firstName: firstName,
-            role: "employee"
-          });
+          const firstName = response.data.firstname || response.data.user?.email?.split("@")[0] || "Employee";
+          setUserData({ firstName, role: "employee" });
           localStorage.setItem("first_name", firstName);
           setIsLoading(false);
           return;
         }
       } catch (error) {}
-
       const rawRole = localStorage.getItem("role") || localStorage.getItem("group") || "client";
       const role = normalizeRole(rawRole);
       let firstName = localStorage.getItem("first_name") || "User";
-      
       setUserData({ firstName, role });
-      
     } catch (error) {
       const rawRole = localStorage.getItem("role") || localStorage.getItem("group") || "client";
       const role = normalizeRole(rawRole);
@@ -228,124 +239,59 @@ export default function Navbar({ content }) {
 
   const menuItems = menuConfig[userData.role] || menuConfig.client;
 
-  // Create bottom nav items: first 4 menu items + logout button
   const bottomNavItems = [
     ...menuItems.slice(0, 4),
-    { label: "LOGOUT", path: "logout", icon: <LogoutIcon sx={{ color: "#9e2c2c" }} /> }
+    { label: "LOGOUT", path: "logout", icon: <LogoutIcon sx={{ color: "#9e2c2c" }} /> },
   ];
 
-  // Find current index for bottom navigation
   useEffect(() => {
-    const currentIndex = bottomNavItems.findIndex(item => item.path === path);
-    if (currentIndex !== -1) {
-      setBottomNavValue(currentIndex);
-    }
+    const currentIndex = bottomNavItems.findIndex((item) => item.path === path);
+    if (currentIndex !== -1) setBottomNavValue(currentIndex);
   }, [path, bottomNavItems]);
 
   const handleLogout = async () => {
     const userId = localStorage.getItem("user_id");
     const role = normalizeRole(localStorage.getItem("role"));
-
     if (userId && role === "client") {
-      const userDataKeys = [
-        "userBudget",
-        "userExpenses",
-        "userServices",
-        "userBookings",
-        "userSettings",
-        "first_name",
-        "role",
-      ];
-
+      const userDataKeys = ["userBudget", "userExpenses", "userServices", "userBookings", "userSettings", "first_name", "role"];
       userDataKeys.forEach((key) => {
         const value = localStorage.getItem(key);
-        if (value) {
-          localStorage.setItem(`user_${userId}_${key}`, value);
-        }
+        if (value) localStorage.setItem(`user_${userId}_${key}`, value);
       });
     }
-
     try {
       await AxiosInstance.post("logout/");
     } catch (error) {
       console.log("Logout API error:", error);
     }
-
-    [
-      "token",
-      "access",
-      "refresh",
-      "user_id",
-      "employee_id",
-      "employee_number",
-      "first_name",
-      "last_name",
-      "email",
-      "role",
-      "group",
-    ].forEach((key) => localStorage.removeItem(key));
-
-    [
-      "userBudget",
-      "userExpenses",
-      "userServices",
-      "userBookings",
-      "userSettings",
-      "profileImage",
-    ].forEach((key) => localStorage.removeItem(key));
-
+    ["token", "access", "refresh", "user_id", "employee_id", "employee_number", "first_name", "last_name", "email", "role", "group"].forEach((key) =>
+      localStorage.removeItem(key)
+    );
+    ["userBudget", "userExpenses", "userServices", "userBookings", "userSettings", "profileImage"].forEach((key) =>
+      localStorage.removeItem(key)
+    );
     sessionStorage.clear();
     setUserData({ firstName: "User", role: "client" });
-
     navigate("/", { replace: true });
   };
 
-  const [profileImage, setProfileImage] = useState(() => {
-    const savedImage = localStorage.getItem("profileImage");
-    return savedImage || DefaultProfilePic;
-  });
+  const profileLink = userData.role === "employee" ? "/employee/account" : "/client-profile";
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedImage = localStorage.getItem("profileImage");
-      setProfileImage(savedImage || DefaultProfilePic);
-    };
-
-    const interval = setInterval(handleStorageChange, 1000);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleDrawerClose = () => {
-    if (isMobile) {
-      setMobileOpen(false);
-    }
-  };
-
-  const profileLink =
-    userData.role === "employee" ? "/employee/account" : "/client-profile";
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+  const handleDrawerClose = () => isMobile && setMobileOpen(false);
 
   const drawer = (
     <>
       <Toolbar />
-
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
         <img src={Logo} alt="Logo" style={{ width: isMobile ? "150px" : "200px" }} />
       </Box>
-
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
         <Link to={profileLink} onClick={handleDrawerClose} style={{ textDecoration: "none" }}>
           <img
             src={profileImage}
             alt="Profile"
+            onError={(e) => (e.target.src = DefaultProfilePic)}
             style={{
               width: isMobile ? "100px" : "150px",
               height: isMobile ? "100px" : "150px",
@@ -357,7 +303,6 @@ export default function Navbar({ content }) {
           />
         </Link>
       </Box>
-
       <Typography
         variant="h6"
         sx={{
@@ -369,61 +314,33 @@ export default function Navbar({ content }) {
           letterSpacing: "-0.01em",
         }}
       >
-        {isLoading ? "Loading..." : `Welcome, ${userData.firstName}!`}
+        {isLoading || imageLoading ? "Loading..." : `Welcome, ${userData.firstName}!`}
       </Typography>
-
       <Box sx={{ overflow: "auto", px: 2 }}>
         <List>
           {menuItems.map((item) => (
             <ListItem disablePadding key={item.path} sx={{ mb: 0.5 }}>
-              <ListItemButton
-                component={Link}
-                to={item.path}
-                selected={path === item.path}
-                onClick={handleDrawerClose}
-                sx={{
-                  py: 1,
-                  px: 2,
-                }}
-              >
+              <ListItemButton component={Link} to={item.path} selected={path === item.path} onClick={handleDrawerClose} sx={{ py: 1, px: 2 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>
             </ListItem>
           ))}
-
-          <Box
-            sx={{
-              my: 2,
-              borderTop: "1px solid rgba(28, 61, 55, 0.12)",
-            }}
-          />
-
+          <Box sx={{ my: 2, borderTop: "1px solid rgba(28, 61, 55, 0.12)" }} />
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => {
                 handleLogout();
                 handleDrawerClose();
               }}
-              sx={{
-                py: 1,
-                px: 2,
-                "&:hover": {
-                  backgroundColor: "rgba(255, 68, 68, 0.04)",
-                },
-              }}
+              sx={{ py: 1, px: 2, "&:hover": { backgroundColor: "rgba(255, 68, 68, 0.04)" } }}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <LogoutIcon sx={{ color: "#9e2c2c" }} />
               </ListItemIcon>
               <ListItemText
                 primary="LOGOUT"
-                sx={{
-                  "& .MuiListItemText-primary": {
-                    color: "#9e2c2c !important",
-                    fontWeight: 500,
-                  },
-                }}
+                sx={{ "& .MuiListItemText-primary": { color: "#9e2c2c !important", fontWeight: 500 } }}
               />
             </ListItemButton>
           </ListItem>
@@ -434,7 +351,6 @@ export default function Navbar({ content }) {
 
   const handleBottomNavChange = (event, newValue) => {
     const selectedItem = bottomNavItems[newValue];
-    
     if (selectedItem.label === "LOGOUT") {
       handleLogout();
     } else {
@@ -458,24 +374,17 @@ export default function Navbar({ content }) {
           }}
         >
           <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
+            <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
               <MenuIcon />
             </IconButton>
-
             <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
               <img src={Logo} alt="Logo" style={{ height: "40px" }} />
             </Typography>
-
             <Link to={profileLink} onClick={handleDrawerClose}>
               <img
                 src={profileImage}
                 alt="Profile"
+                onError={(e) => (e.target.src = DefaultProfilePic)}
                 style={{
                   width: "40px",
                   height: "40px",
@@ -494,16 +403,10 @@ export default function Navbar({ content }) {
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
+          ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-              backgroundColor: "#F8F8F8",
-            },
+            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, backgroundColor: "#F8F8F8" },
           }}
         >
           {drawer}
@@ -516,11 +419,7 @@ export default function Navbar({ content }) {
             display: { xs: "none", md: "block" },
             width: drawerWidth,
             flexShrink: 0,
-            [`& .MuiDrawer-paper`]: {
-              width: drawerWidth,
-              boxSizing: "border-box",
-              backgroundColor: "#F8F8F8",
-            },
+            [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: "border-box", backgroundColor: "#F8F8F8" },
           }}
         >
           {drawer}
@@ -541,7 +440,7 @@ export default function Navbar({ content }) {
           {content}
         </Box>
 
-        {/* Bottom Navigation Bar for Mobile - 5 items including logout */}
+        {/* Bottom Navigation Bar for Mobile */}
         <Paper
           sx={{
             position: "fixed",
@@ -562,29 +461,17 @@ export default function Navbar({ content }) {
             sx={{
               backgroundColor: "#F8F8F8",
               height: "56px",
-              "& .MuiBottomNavigationAction-root": {
-                color: "#8a9e98",
-                "&.Mui-selected": {
-                  color: GREEN,
-                },
-              },
+              "& .MuiBottomNavigationAction-root": { color: "#8a9e98", "&.Mui-selected": { color: GREEN } },
             }}
           >
             {bottomNavItems.map((item, index) => (
               <BottomNavigationAction
                 key={index}
                 label={item.label}
-                icon={React.cloneElement(item.icon, { 
-                  sx: { 
-                    color: item.label === "LOGOUT" ? "#9e2c2c" : "inherit",
-                    fontSize: "24px"
-                  } 
+                icon={React.cloneElement(item.icon, {
+                  sx: { color: item.label === "LOGOUT" ? "#9e2c2c" : "inherit", fontSize: "24px" },
                 })}
-                sx={{
-                  "& .MuiBottomNavigationAction-label": {
-                    color: item.label === "LOGOUT" ? "#9e2c2c" : "inherit",
-                  },
-                }}
+                sx={{ "& .MuiBottomNavigationAction-label": { color: item.label === "LOGOUT" ? "#9e2c2c" : "inherit" } }}
               />
             ))}
           </BottomNavigation>

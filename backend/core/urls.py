@@ -5,7 +5,7 @@ from .views import (
     ServiceTypeViewSet, ServiceViewSet, CustomerServiceViewSet,
     SiteViewSet, ZoneViewSet, InvoiceViewSet,
     QuoteViewSet, ScheduleViewSet,RequestQuoteViewSet, ServiceLocationViewSet,
-    BudgetViewSet,ExpenseViewSet,LocationServiceViewSet
+    BudgetViewSet,ExpenseViewSet,LocationServiceViewSet, UserImageViewSet
 )
 
 router = DefaultRouter()
@@ -26,6 +26,8 @@ router.register(r'service-locations', ServiceLocationViewSet, basename='servicel
 router.register(r'budgets', BudgetViewSet, basename='budget')
 router.register(r'expenses', ExpenseViewSet, basename='expense')
 router.register(r'location-services', LocationServiceViewSet, basename='locationservice')
+router.register(r'user-image', UserImageViewSet, basename='userimage')
+
 
 urlpatterns = [
     path("", include(router.urls)),

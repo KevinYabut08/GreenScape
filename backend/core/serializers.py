@@ -263,18 +263,22 @@ class CustomerServiceSerializer(serializers.ModelSerializer):
 
 # Service Image 
 class UserImageSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='userimageid', read_only=True)
+    filename = serializers.CharField(source='file_name', read_only=True)
+    size_bytes = serializers.IntegerField(source='size_byte', read_only=True)
     url = serializers.SerializerMethodField()
 
     class Meta:
         model = UserImage
-        fields = ["id", "user", "bucket", "storage_path", "content_type", "filename", "size_bytes", "created_at", "url"]
+        fields = ["id", "user", "bucket", "storage_path", "content_type", 
+                  "filename", "size_bytes", "created_at", "url"]
         read_only_fields = ["id", "created_at", "url"]
 
-    def get_url(self, obj: UserImage):
+    def get_url(self, obj):
         request = self.context.get("request")
         if not request:
             return None
-        return request.build_absolute_uri(f"/core/profiles/{obj.id}/bytes/")
+        return request.build_absolute_uri(f"/core/user-image/{obj.userimageid}/bytes/")
 
 # Employee Serializer
 class EmployeeSerializer(serializers.ModelSerializer):
