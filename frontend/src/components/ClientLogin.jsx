@@ -141,7 +141,7 @@ const handleGoogleCredential = async (response) => {
   return (
     <div className="myBackground">
 
-      <video autoPlay muted loop className="backgroundVideo">
+      <video autoPlay muted loop playsInline className="backgroundVideo">
         <source src={BackgroundVideo} type="video/mp4" />
       </video>
 
