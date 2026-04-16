@@ -32,62 +32,58 @@ const EmployeeLogin = () => {
         payload.employee_number = employeeNumber;
       }
 
-      const response = await AxiosInstance.post(
-        "login/employee/",
-        payload
-      );
+      const response = await AxiosInstance.post("login/employee/", payload);
 
       const { access, user } = response.data;
-      const group = user?.group;
+      const group = user?.group || "";
+
       localStorage.clear();
-      //Store auth/session info
+
+      // Store auth/session info
       localStorage.setItem("access", access);
       localStorage.setItem("user_id", user.id);
       localStorage.setItem("email", user.email);
       localStorage.setItem("role", user.role);
-      localStorage.setItem("group", group || "");
+      localStorage.setItem("group", group);
+      localStorage.setItem("first_name", user.first_name || "");
+
       console.log("Logged in user group:", group);
+      console.log("Logged in user:", user);
 
-    // Employee roles → enforce profile completion
-    if (group === "Staff" || group === "Supervisor" || group === "Admin") {
-      try {
-        const meRes = await AxiosInstance.get("core/employees/me/");
-        const employee = meRes.data;
+      // Employee roles → enforce profile completion
+      if (group === "Staff" || group === "Supervisor" || group === "Admin") {
+        try {
+          const meRes = await AxiosInstance.get("core/employees/me/");
+          const employee = meRes.data;
 
-        const profileComplete =
-          employee.firstname &&
-          employee.lastname &&
-          employee.phonenumber &&
-          employee.address;
+          const profileComplete =
+            employee.firstname &&
+            employee.lastname &&
+            employee.phonenumber &&
+            employee.address;
 
-        if (!profileComplete) {
-          navigate("/employee/complete-profile");
+          if (!profileComplete) {
+            navigate("/employee/complete-profile");
+            return;
+          }
+
+          navigate("/employeeHome");
           return;
-        }
+        } catch (err) {
+          if (err.response?.status === 404) {
+            navigate("/employee/complete-profile");
+            return;
+          }
 
+          console.error("Employee profile check failed:", err);
+          throw err;
+        }
+      } else if (group === "SuperAdmin") {
         navigate("/employeeHome");
         return;
-
-      } catch (err) {
-        if (err.response?.status === 404) {
-          // New employee → no profile yet
-          navigate("/employee/complete-profile");
-          return;
-        }
-
-        // Any other error really is a problem
-        console.error("Employee profile check failed:", err);
-        throw err;
       }
-    }
 
-    else if (group === "SuperAdmin") {
-      navigate("/employeeHome");
-      return;
-    }
-      //Fallback (misconfigured account)
-      setError("Your account has no assigned role. Please contact support.");
-
+      setError("Your account has no assigned role/group. Please contact support.");
     } catch (err) {
       console.error(err.response || err);
       setError("Login failed. Please check your credentials.");
@@ -110,7 +106,7 @@ const EmployeeLogin = () => {
           type="text"
           placeholder="Employee Number"
           value={employeeNumber}
-          onChange={e => setEmployeeNumber(e.target.value)}
+          onChange={(e) => setEmployeeNumber(e.target.value)}
           maxLength={20}
         />
 
@@ -118,7 +114,7 @@ const EmployeeLogin = () => {
           type="text"
           placeholder="Email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           maxLength={254}
         />
 
@@ -126,13 +122,13 @@ const EmployeeLogin = () => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           maxLength={50}
         />
 
         <button onClick={handleLogin}>LOGIN</button>
 
-        <button onClick={() => navigate('/employee-register')}>
+        <button onClick={() => navigate("/employee-register")}>
           SIGN UP
         </button>
 
