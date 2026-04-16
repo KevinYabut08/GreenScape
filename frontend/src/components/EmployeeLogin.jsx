@@ -29,10 +29,14 @@ const EmployeeLogin = () => {
       };
 
       if (employeeNumber.trim() !== "") {
-        payload.employee_number = employeeNumber;
+        payload.employee_number = employeeNumber.trim();
       }
 
+      console.log("Sending login payload:", payload);
+
       const response = await AxiosInstance.post("login/employee/", payload);
+
+      console.log("Login response:", response.data);
 
       const { access, user } = response.data;
       const group = user?.group || "";
@@ -46,11 +50,11 @@ const EmployeeLogin = () => {
       localStorage.setItem("role", user.role);
       localStorage.setItem("group", group);
       localStorage.setItem("first_name", user.first_name || "");
+      localStorage.setItem("last_name", user.last_name || "");
+      localStorage.setItem("employee_number", user.employee_number || "");
 
       console.log("Logged in user group:", group);
-      console.log("Logged in user:", user);
 
-      // Employee roles → enforce profile completion
       if (group === "Staff" || group === "Supervisor" || group === "Admin") {
         try {
           const meRes = await AxiosInstance.get("core/employees/me/");
@@ -75,7 +79,7 @@ const EmployeeLogin = () => {
             return;
           }
 
-          console.error("Employee profile check failed:", err);
+          console.error("Employee profile check failed:", err.response?.data || err);
           throw err;
         }
       } else if (group === "SuperAdmin") {
@@ -85,8 +89,23 @@ const EmployeeLogin = () => {
 
       setError("Your account has no assigned role/group. Please contact support.");
     } catch (err) {
-      console.error(err.response || err);
-      setError("Login failed. Please check your credentials.");
+      console.error("Login error:", err.response?.data || err);
+
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.response?.data?.non_field_errors?.length) {
+        setError(err.response.data.non_field_errors[0]);
+      } else if (err.response?.data?.email?.length) {
+        setError(err.response.data.email[0]);
+      } else if (err.response?.data?.employee_number?.length) {
+        setError(err.response.data.employee_number[0]);
+      } else if (err.response?.data?.password?.length) {
+        setError(err.response.data.password[0]);
+      } else if (typeof err.response?.data === "string") {
+        setError(err.response.data);
+      } else {
+        setError("Login failed. Please check your credentials.");
+      }
     }
   };
 
